@@ -81,7 +81,7 @@ export const deleteRecord = async (req: Request, res: Response) => {
 export const filterRecords = async (req: Request, res: Response) => {
   try {
     const { from, to } = req.query;
-
+    console.log(req.user)
     let filter: any = { userId: req.user?.id };
 
     if (from || to) {

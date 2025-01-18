@@ -5,18 +5,17 @@ import bcrypt from "bcryptjs";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, preferredWorkingHours } = req.body;
-
+    const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
       return res.status(400).json({ message: "Email already exists" });
     }
-
+    
     const newUser = new User({
       name,
       email,
-      password,
-      preferredWorkingHours,
+      password
     });
     await newUser.save();
 
