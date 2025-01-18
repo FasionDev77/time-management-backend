@@ -32,7 +32,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { email, name, role } = req.body;
+    const { email, name, preferedHours, role } = req.body;
 
     // Fetch user to update
     const user = await User.findById(id);
@@ -44,27 +44,31 @@ export const updateUser = async (req: Request, res: Response) => {
     if (role && req.user?.role !== "admin") {
       return res.status(403).json({ message: "Only Admin can update roles." });
     }
-
+    console.log("req.user?.id", req.user?.id, id);
     // User Manager or Admin can update other fields
-    if (req.user?.role === "user_manager" || req.user?.role === "admin") {
+    if (req.user?.id === id) {
       user.email = email || user.email;
       user.name = name || user.name;
-
-      // Allow role update only for Admin
-      if (req.user?.role === "admin" && role) {
-        user.role = role;
+      user.preferredWorkingHours = preferedHours || user.name;
+    } else if (req.user?.role === "admin") {
+      // Admins can update the user's role and other details
+      user.email = email || user.email;
+      user.name = name || user.name;
+      user.name = preferedHours || user.name;
+      if (req.body.role) {
+        user.role = req.body.role;
       }
-
-      await user.save();
-
-      return res.status(200).json({
-        message: "User updated successfully.",
-        user,
-      });
+    } else {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this user." });
     }
+    await user.save();
 
-    // Other roles not authorized
-    return res.status(403).json({ message: "Unauthorized to update users." });
+    return res.status(200).json({
+      message: "User updated successfully.",
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }

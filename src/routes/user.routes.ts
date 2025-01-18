@@ -13,7 +13,7 @@ const router = express.Router();
 // Admin and User Manager can fetch all users
 router.get("/:id", authenticate, getUserById);
 router.get("/", authenticate, authorizeAdminOrManager, getAllUsers);
-router.put("/:id", authenticate, authorizeAdminOrManager, updateUser);
+router.put("/:id", authenticate, updateUser);
 router.delete("/:id", authenticate, authorizeAdminOrManager, deleteUser);
 
 export default router;
