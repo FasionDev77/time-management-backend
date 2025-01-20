@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Record } from "../models/Record";
 import { User } from "../models/User";
+import { MESSAGES } from "../constants/messages";
 
 export const createRecord = async (req: Request, res: Response) => {
   try {
@@ -8,13 +9,13 @@ export const createRecord = async (req: Request, res: Response) => {
 
     // Ensure the authenticated user's details are available
     if (!req.user?.id) {
-      return res.status(401).json({ message: "User not authenticated" });
+      return res.status(401).json({ message: MESSAGES.UNAUTHORIZED });
     }
 
     // Fetch user for validation
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: MESSAGES.USER_NOT_FOUND });
     }
 
     // Determine status based on preferred working hours
@@ -33,7 +34,7 @@ export const createRecord = async (req: Request, res: Response) => {
     await record.save();
     res.status(201).json(record);
   } catch (error) {
-    res.status(500).json({ message: "Adding Record failed", error });
+    res.status(500).json({ message: MESSAGES.ADDING_RECORD_FAILED, error });
   }
 };
 
@@ -45,7 +46,7 @@ export const updateRecord = async (req: Request, res: Response) => {
     const record = await Record.findById(id);
 
     if (!record || record.userId.toString() !== req.user?.id) {
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: MESSAGES.UNAUTHORIZED });
     }
 
     record.description = description || record.description;
@@ -56,7 +57,7 @@ export const updateRecord = async (req: Request, res: Response) => {
 
     res.status(200).json(record);
   } catch (error) {
-    res.status(500).json({ message: "Updating record failed", error });
+    res.status(500).json({ message: MESSAGES.UPDATING_RECORD_FAILED, error });
   }
 };
 
@@ -67,7 +68,7 @@ export const deleteRecord = async (req: Request, res: Response) => {
     const record = await Record.findById(id);
 
     if (!record || record.userId.toString() !== req.user?.id) {
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: MESSAGES.UNAUTHORIZED });
     }
 
     await record.deleteOne();
@@ -77,20 +78,23 @@ export const deleteRecord = async (req: Request, res: Response) => {
   }
 };
 
-
 export const filterRecords = async (req: Request, res: Response) => {
   try {
     const { from, to } = req.query;
-    console.log(req.user)
     let filter: any = { userId: req.user?.id };
 
     if (from || to) {
-      if ((from && isNaN(Date.parse(from as string))) || (to && isNaN(Date.parse(to as string)))) {
-        return res.status(400).json({ message: 'Invalid date format for "from" or "to". Use YYYY-MM-DD.' });
+      if (
+        (from && isNaN(Date.parse(from as string))) ||
+        (to && isNaN(Date.parse(to as string)))
+      ) {
+        return res.status(400).json({
+          message: MESSAGES.INVAID_DATE_FORMAT,
+        });
       }
 
       if (from && to && new Date(to as string) < new Date(from as string)) {
-        return res.status(400).json({ message: '"to" date must not be earlier than "from" date.' });
+        return res.status(400).json({ message: MESSAGES.VALIDATE_DATE_RANGE });
       }
 
       filter.date = {
@@ -102,11 +106,14 @@ export const filterRecords = async (req: Request, res: Response) => {
     const records = await Record.find(filter);
 
     if (!records.length) {
-      return res.status(404).json({ message: 'No records found for the user.' });
+      return res.status(404).json({ message: MESSAGES.RECORD_NOT_FOUND });
     }
-
-    res.status(200).json(records);
+    const formattedRecords = records.map((record) => ({
+      ...record.toObject(),
+      date: new Date(record.date).toISOString().slice(0, 10), // Format the date
+    }));
+    res.status(200).json(formattedRecords);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };
