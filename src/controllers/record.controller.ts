@@ -18,9 +18,8 @@ export const createRecord = async (req: Request, res: Response) => {
       return res.status(404).json({ message: MESSAGES.USER_NOT_FOUND });
     }
 
-    // Determine status based on preferred working hours
-    const status =
-      duration < (user.preferredWorkingHours || 8) ? "red" : "green";
+    // Determine status based on prefered working hours
+    const status = duration < (user.preferedHours || 8) ? "red" : "green";
 
     // Create the record
     const record = new Record({

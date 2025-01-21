@@ -3,7 +3,7 @@ import { User } from "../models/User";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-import {MESSAGES} from '../constants/messages'
+import { MESSAGES } from "../constants/messages";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -13,11 +13,11 @@ export const register = async (req: Request, res: Response) => {
     if (existingUser) {
       return res.status(400).json({ message: MESSAGES.USER_EXIST });
     }
-    
+
     const newUser = new User({
       name,
       email,
-      password
+      password,
     });
     await newUser.save();
 
@@ -36,7 +36,13 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user._id,name: user.name, email: user.email, preferedHours: user.preferredWorkingHours, role: user.role },
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        preferedHours: user.preferedHours,
+        role: user.role,
+      },
       process.env.JWT_SECRET || MESSAGES.SECURITKEY,
       { expiresIn: "24h" }
     );
