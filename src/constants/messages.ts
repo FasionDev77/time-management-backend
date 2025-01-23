@@ -13,12 +13,15 @@ export const MESSAGES = {
   LOGIN_SUCCESS: "Login successfully",
   LOGIN_FAILED: "Login failed",
 
+  INVALID_DATE_FORMAT: "Invalid date format for From or End. Use YYYY-MM-DD.",
+
+  ADDING_RECORD_SUCESS: "Record added successfully",
   ADDING_RECORD_FAILED: "Adding Record failed",
   UPDATING_RECORD_FAILED: "Updating Record failed",
 
   DELETING_RECORD_SUCESS: "Record deleted successfully",
   DELETING_RECORD_FAILED: "Deleting Record failed",
-  RECORD_NOT_FOUND: "Record not found",
+  RECORD_NOT_FOUND: "There is no record",
 
   INVAID_DATE_FORMAT: "Invalid date format for From or End. Use YYYY-MM-DD.",
   VALIDATE_DATE_RANGE: "End date must not be earlier than Start date.",

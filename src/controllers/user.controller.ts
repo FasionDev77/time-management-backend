@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { User } from "../models/User";
+import { Record } from "../models/Record";
 
 export const getUserById = async (req: Request, res: Response) => {
   try {
@@ -39,28 +40,11 @@ export const updateUser = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
-    // Ensure Admin-only role modification
-    if (role && req.user?.role !== "admin") {
-      return res.status(403).json({ message: "Only Admin can update roles." });
-    }
-    // User Manager or Admin can update other fields
-    if (req.user?.id === id) {
-      user.email = email || user.email;
-      user.name = name || user.name;
-      user.preferedHours = preferedHours || user.preferedHours;
-    } else if (req.user?.role === "admin") {
-      // Admins can update the user's role and other details
-      user.email = email || user.email;
-      user.name = name || user.name;
-      user.preferedHours = preferedHours || user.preferedHours;
-      if (req.body.role) {
-        user.role = req.body.role;
-      }
-    } else {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized to update this user." });
+    user.email = email || user.email;
+    user.name = name || user.name;
+    user.preferedHours = preferedHours || user.preferedHours;
+    if (req.body.role) {
+      user.role = req.body.role;
     }
     await user.save();
 
@@ -83,15 +67,15 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // // Prevent Admin from deleting themselves
-    // if (req.user?.id === id) {
-    //   return res
-    //     .status(403)
-    //     .json({ message: "Admins cannot delete their own accounts." });
-    // }
+    // Delete all records associated with the user
+    await Record.deleteMany({ userId: id });
 
-    await User.findOneAndDelete({ _id: id });
-    res.status(200).json({ message: "User deleted successfully." });
+    // Delete the user
+    await User.findByIdAndDelete(id);
+
+    res
+      .status(200)
+      .json({ message: "User and their records deleted successfully." });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }

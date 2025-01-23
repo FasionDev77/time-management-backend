@@ -31,7 +31,7 @@ export const createRecord = async (req: Request, res: Response) => {
     });
 
     await record.save();
-    res.status(201).json(record);
+    res.status(201).json({ record, message: MESSAGES.ADDING_RECORD_SUCESS });
   } catch (error) {
     res.status(500).json({ message: MESSAGES.ADDING_RECORD_FAILED, error });
   }
@@ -44,12 +44,16 @@ export const updateRecord = async (req: Request, res: Response) => {
 
     const record = await Record.findById(id);
 
-    if (!record || record.userId.toString() !== req.user?.id) {
-      return res.status(403).json({ message: MESSAGES.UNAUTHORIZED });
+    if (!record) {
+      return res.status(404).json({ message: "Record not found" });
     }
 
+    // if (!record || record.userId.toString() !== req.user?.id) {
+    //   return res.status(403).json({ message: MESSAGES.UNAUTHORIZED });
+    // }
+
     record.description = description || record.description;
-    record.date = date || record.date;
+    // record.date = date || record.date;
     record.duration = duration || record.duration;
     record.status = duration < 8 ? "red" : "green";
     await record.save();
@@ -59,7 +63,6 @@ export const updateRecord = async (req: Request, res: Response) => {
     res.status(500).json({ message: MESSAGES.UPDATING_RECORD_FAILED, error });
   }
 };
-
 export const deleteRecord = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -76,43 +79,63 @@ export const deleteRecord = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Deleting record failed", error });
   }
 };
+export const deleteUserRecord = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
+    const record = await Record.findById(id);
+
+    if (!record) {
+      return res.status(404).json({ message: "Record not found" });
+    }
+
+    await record.deleteOne();
+    res.status(200).json({ message: "Record deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Deleting record failed", error });
+  }
+};
 export const filterRecords = async (req: Request, res: Response) => {
   try {
+    const userId = req.user?.id; // Assuming the logged-in user ID is available in req.user
+
+    // Validate logged-in user
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not logged in" });
+    }
+
     const { from, to } = req.query;
-    let filter: any = { userId: req.user?.id };
 
-    if (from || to) {
-      if (
-        (from && isNaN(Date.parse(from as string))) ||
-        (to && isNaN(Date.parse(to as string)))
-      ) {
-        return res.status(400).json({
-          message: MESSAGES.INVAID_DATE_FORMAT,
-        });
-      }
-
-      if (from && to && new Date(to as string) < new Date(from as string)) {
-        return res.status(400).json({ message: MESSAGES.VALIDATE_DATE_RANGE });
-      }
-
-      filter.date = {
-        ...(from && { $gte: new Date(from as string) }),
-        ...(to && { $lte: new Date(to as string) }),
-      };
+    if (!from && !to) {
+      const records = await Record.find({ userId }).sort({ date: -1 });
+      return res.status(200).json(records);
     }
 
-    const records = await Record.find(filter);
+    // Fetch records within the date range
+    const records = await Record.find({
+      userId,
+      ...(from && { date: { $gte: new Date(from as string) } }),
+      ...(to && { date: { $lte: new Date(to as string) } }),
+    });
 
-    if (!records.length) {
-      return res.status(404).json({ message: MESSAGES.RECORD_NOT_FOUND });
-    }
-    const formattedRecords = records.map((record) => ({
-      ...record.toObject(),
-      date: new Date(record.date).toISOString().slice(0, 10), // Format the date
-    }));
-    res.status(200).json(formattedRecords);
+    // Return records
+    return res.status(200).json(records);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    console.error("Error fetching records:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export const userRecords = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    const records = await Record.find({ userId }).sort({ date: -1 });
+    return res.status(200).json(records);
+  } catch (error) {
+    console.error("Error fetching records:", error);
+    return res.status(500).json({ message: "Server error", error });
   }
 };
