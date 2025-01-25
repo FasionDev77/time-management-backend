@@ -17,7 +17,10 @@ export const MESSAGES = {
 
   ADDING_RECORD_SUCESS: "Record added successfully",
   ADDING_RECORD_FAILED: "Adding Record failed",
+  UPDATING_REECORD_SUCESS: "Record updated successfully",
   UPDATING_RECORD_FAILED: "Updating Record failed",
+
+  USER_UPDATE_SUCESS: "Profile updated successfully",
 
   DELETING_RECORD_SUCESS: "Record deleted successfully",
   DELETING_RECORD_FAILED: "Deleting Record failed",

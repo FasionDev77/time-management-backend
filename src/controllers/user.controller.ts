@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { User } from "../models/User";
 import { Record } from "../models/Record";
+import { MESSAGES } from "../constants/messages";
 
 export const getUserById = async (req: Request, res: Response) => {
   try {
@@ -33,7 +34,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { email, name, preferedHours, role } = req.body;
+    const { email, name, preferedHours, password, role } = req.body;
 
     // Fetch user to update
     const user = await User.findById(id);
@@ -42,15 +43,24 @@ export const updateUser = async (req: Request, res: Response) => {
     }
     user.email = email || user.email;
     user.name = name || user.name;
+    user.password = password || user.password;
     user.preferedHours = preferedHours || user.preferedHours;
-    if (req.body.role) {
-      user.role = req.body.role;
+    if (role) {
+      user.role = role;
     }
     await user.save();
 
+    const updatedUser = {
+      email: user.email,
+      name: user.name,
+      preferedHours: user.preferedHours,
+      role: user.role,
+      id: user._id,
+    };
+
     return res.status(200).json({
-      message: "User updated successfully.",
-      user,
+      message: MESSAGES.USER_UPDATE_SUCESS,
+      updatedUser,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });

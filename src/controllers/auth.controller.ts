@@ -21,7 +21,7 @@ export const register = async (req: Request, res: Response) => {
     });
     await newUser.save();
 
-    res.status(201).json({ message: MESSAGES.REGISTER_SUCCESS });
+    res.status(201).json({ user: newUser, message: MESSAGES.REGISTER_SUCCESS });
   } catch (error) {
     res.status(500).json({ message: MESSAGES.REGISTER_FAILED, error });
   }
@@ -47,7 +47,7 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: "24h" }
     );
 
-    res.status(200).json({ token });
+    res.status(200).json({ token, message: MESSAGES.LOGIN_SUCCESS });
   } catch (error) {
     res.status(500).json({ message: MESSAGES.LOGIN_FAILED, error });
   }
